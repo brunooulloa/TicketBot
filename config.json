@@ -1,20 +1,15 @@
 {
-	"token": "OTQ1NzcwODM1NzI4MjY5MzEz.YhU_ug.owEhIyYOMlj5CZvcUmAqEupD7IE",
+	"token": "",
 
 	"purge_default": 5,
 
-	"owner_id": 293148087407476737,
+	"owner_id": 0,
 
-	"guild_id": 945771244547108895,
+	"guild_id": 0,
 
 	"staff": {
-		"name": "admin",
-		"id": 833067107859955721
-	},
-
-	"muted": {
-		"name": "Muted",
-		"id": 943271584142078032
+		"name": "",
+		"id": 0
 	},
 
 	"database": {
@@ -26,6 +21,6 @@
 
 	"logs": {
 		"enabled": true,
-		"channel_id": 945812048082788412
+		"channel_id": 0
 	}
 }
