@@ -19,8 +19,6 @@ with open(cwd('config.json'), 'r') as config:
     staff_role = data['staff']['name']
     staff_role_id = data['staff']['id']
     database = data['database']
-    muted_role = data['muted']['name']
-    muted_role_id = data['muted']['id']
     purge_default = data['purge_default']
     if enable_logs := data['logs']['enabled']:
         log_channel_id = data['logs']['channel_id']
