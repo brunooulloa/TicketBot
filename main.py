@@ -13,6 +13,7 @@ def cwd(file: str):
 """ Get config.json """
 with open(cwd('config.json'), 'r') as config:
     data = json.load(config)
+    prefix = data['prefix']
     token = data['token']
     owner_id = data['owner_id']
     guild_id = data['guild_id']
@@ -40,7 +41,7 @@ async def presence():
 			await asyncio.sleep(20)
 
 """ Bot """
-bot = commands.Bot(command_prefix = softFunctions.get_prefix, help_command = None, intents = intents, owner_id = owner_id)
+bot = commands.Bot(command_prefix = prefix, help_command = None, intents = intents, owner_id = owner_id)
 
 """ Database """
 connection = None
@@ -65,6 +66,9 @@ cursor = get_cursor()
 """ Colours """
 red = discord.Colour.from_rgb(255, 0, 0)
 
+""" Categories """
+categories = ['Donacion', 'Otros', 'Reporte', 'Dudas']
+
 """ Owner variables """
 soft_user = 'Soft#6666'
 soft_avatar = 'https://images-ext-2.discordapp.net/external/p0KE48w9Lt_6PsiIu3hhU8zHgF-9LLEmk8tbUmNLPoU/%3Fsize%3D1024/https/cdn.discordapp.com/avatars/293148087407476737/a_d0cbdc184155c678ea1ad107163a324b.gif'
@@ -83,29 +87,8 @@ async def on_command_error(ctx, error):
         return
     raise error
 
-@bot.event
-async def on_guild_join(guild):
-    with open(cwd('prefixes.json'), 'r') as f:
-        prefixes = json.load(f)
-
-    prefixes[str(guild.id)] = '!'
-
-    with open(cwd('prefixes.json'), 'w') as f:
-        json.dump(prefixes, f, indent = 4)
-
-@bot.event
-async def on_guild_remove(guild):
-    with open(cwd('prefixes.json'), 'r') as f:
-        prefixes = json.load(f)
-
-    prefixes.pop(str(guild.id))
-
-    with open(cwd('prefixes.json'), 'w') as f:
-        json.dump(prefixes, f, indent = 4)
-
 """ Ticket Commands """
 @bot.command()
-@commands.has_role(staff_role)
 async def ticket(ctx):
     await ctx.message.delete()
     embed = discord.Embed(title = '🎫 Crea un Ticket!', description = '📩 Selecciona tu tipo de ticket abajo para contactarte con nosotros!', color = red)
@@ -123,8 +106,6 @@ async def ticket(ctx):
 async def rename(ctx, name: str):
     await ctx.message.delete()
     if 'ticket-' in ctx.channel.name:
-        categories = [ 'Reporte', 'Dudas', 'Donacion', 'Otros' ]
-
         if ctx.channel.category.name in categories:
             await ctx.channel.edit(name = f'{name}-{ctx.channel.name.split("-")[-1]}')
             embed = discord.Embed(title = 'Canal renombrado!', description = f'Se ha renombrado el canal a "{name}"', color = red)
@@ -396,12 +377,14 @@ class TicketButtons(discord.ui.View):
                 log_channel = bot.get_channel(log_channel_id)
                 embed = discord.Embed(title = ' Ticket reclamado!', description = f'{interaction.user.mention} reclamo el {interaction.channel.name}!', color = red, timestamp = datetime.now(timezone('America/Argentina/Buenos_Aires')))
                 await log_channel.send(embed = embed)
+        else:
+            await interaction.response.send_message('No tienes permisos para reclamar tickets!', ephemeral = True)
     
     @discord.ui.button(label = 'Cerrar', style = discord.ButtonStyle.red, emoji = '🔒')
     async def close(self, button: discord.ui.Button, interaction: discord.Interaction):
         embed = discord.Embed(title = 'Cerrando...', description = 'Se esta cerrando el ticket', color = red)
         embed.set_footer(text = soft_user, icon_url = soft_avatar)
-        await interaction.response.send_message(embed = embed, ephemeral = True)
+        msg = await interaction.response.send_message(embed = embed, ephemeral = True)
         cursor.execute(f"UPDATE tickets SET closed = 1 WHERE ticket_id = {int(interaction.channel.name.split('-')[-1])}")
         connection.commit()
         if enable_logs:
@@ -419,6 +402,12 @@ class TicketButtons(discord.ui.View):
                 return
             transcript_file = discord.File(io.BytesIO(transcript.encode()), filename = f'transcript-{interaction.channel.name}.html')
             await log_channel.send(embed = log, file = transcript_file)
+            
+        for i in reversed(range(6)):
+            embed = discord.Embed(title = 'Cerrando...', description = f'Se esta cerrando el ticket, espera {i} segundo/s', color = red)
+            embed.set_footer(text = soft_user, icon_url = soft_avatar)
+            await interaction.edit_original_message(embed = embed)
+            await asyncio.sleep(1)
             
         transcript = await chat_exporter.export(interaction.channel)
         transcript_file = discord.File(io.BytesIO(transcript.encode()), filename = f'transcript-{interaction.channel.name}.html')
